@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settlement skills for Kai · concept by Shri Nagarajan</title>
+<meta name="description" content="Concept prototype by Shri Nagarajan: agentic settlement for a multi-currency payments platform. Explainable payouts, settle-to-spend, and an exceptions agent for settlement operations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet:#612FFF; --violet-ink:#4A1FD6; --violet-soft:#F1ECFF; --violet-line:#D9CCFF;
+  --ink:#14171A; --ink-2:#3D454D; --muted:#5C6670; --line:#E3E6EA; --line-2:#EEF0F2;
+  --bg:#F6F7F9; --card:#FFFFFF;
+  --ok:#0B7A47; --ok-soft:#E6F4EC; --warn:#8F5200; --warn-soft:#FFF4E0; --bad:#B42318; --bad-soft:#FDECEA; --info-soft:#EEF4FF;
+  --r:8px; --r-lg:12px;
+  --font:"Figtree",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--violet-ink)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:4px}
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:12px;top:-60px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:6px;z-index:100}
+.skip:focus{top:8px}
+.num{font-variant-numeric:tabular-nums}
+
+/* concept + demo bar */
+.concept{background:var(--ink);color:#E9EBEE;font-size:12.5px;padding:7px 20px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.concept a{color:#fff}
+.demo{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.demo .grp{display:flex;align-items:center;gap:8px}
+.demo label,.demo .lbl{font-size:12px;color:var(--muted);font-weight:500}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--bg)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:5px 28px 5px 10px;background:#fff;color:var(--ink)}
+.clock{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* app shell */
+.app{display:grid;grid-template-columns:220px minmax(0,1fr) 360px;min-height:calc(100vh - 92px)}
+.app.ops{grid-template-columns:220px minmax(0,1fr)}
+.side{background:#fff;border-right:1px solid var(--line);padding:16px 12px}
+.org{display:flex;gap:10px;align-items:center;padding:6px 8px 14px;border-bottom:1px solid var(--line-2);margin-bottom:12px}
+.mono{width:32px;height:32px;border-radius:8px;background:var(--violet-soft);color:var(--violet-ink);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.org b{display:block;font-size:13.5px}
+.org span{font-size:12px;color:var(--muted)}
+.side .navh{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 8px 4px}
+.side ul{list-style:none;margin:0;padding:0}
+.side li span{display:block;padding:7px 10px;border-radius:6px;color:var(--ink-2)}
+.side li span.cur{background:var(--violet-soft);color:var(--violet-ink);font-weight:600}
+.side li span.dim{color:#8A939C}
+main{padding:22px 28px 60px;min-width:0}
+h1{font-size:22px;margin:0 0 2px;font-weight:600;letter-spacing:-.01em}
+h2{font-size:16px;margin:0 0 10px;font-weight:600}
+h3{font-size:14px;margin:0 0 6px;font-weight:600}
+.sub{color:var(--muted);margin:0 0 18px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 20px}
+.tabs button{border:0;background:none;padding:10px 12px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--violet)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.stat .k{font-size:12.5px;color:var(--muted)}
+.stat .v{font-size:22px;font-weight:600;margin:4px 0 2px;letter-spacing:-.01em}
+.stat .s{font-size:12.5px;color:var(--muted)}
+.stack{display:grid;gap:14px}
+.row{display:flex;gap:12px;align-items:center}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+
+/* tables */
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:500;background:#FBFBFC}
+td.r,th.r{text-align:right;white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#FAF8FF}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff}
+
+/* bits */
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:#C9CED4}
+.btn.pri{background:var(--violet);border-color:var(--violet);color:#fff}
+.btn.pri:hover{background:var(--violet-ink)}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn.link{border:0;background:none;padding:0;color:var(--violet-ink);text-decoration:underline;text-underline-offset:2px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--line-2);color:var(--ink-2);white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.vio{background:var(--violet-soft);color:var(--violet-ink)}
+.pill.plain::before{display:none}
+.notice{border:1px solid var(--line);border-left:4px solid var(--violet);background:#fff;border-radius:var(--r);padding:12px 14px;margin-bottom:16px}
+.notice.warn{border-left-color:#D98A00;background:var(--warn-soft)}
+.notice.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.notice.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.notice h3{margin-bottom:4px}
+.notice p{margin:0 0 6px}
+.notice .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.src{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.insight{border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;background:#fff}
+.insight .tag{font-size:11.5px;font-weight:600;color:var(--violet-ink);text-transform:uppercase;letter-spacing:.05em}
+.insight p{margin:6px 0 10px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line-2);min-width:120px}
+.bar i{display:block;height:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:0 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{width:10px;height:10px;border-radius:2px;display:inline-block}
+.c1{background:#C9BDFB}.c2{background:#9C80FA}.c3{background:#612FFF}.c4{background:#E0A040}.c5{background:#1E9E62}
+.wf td{padding:7px 10px}
+.wf tr.total td{font-weight:600;border-top:1px solid var(--line);border-bottom:0}
+.wf tr.flag td{background:var(--warn-soft)}
+.check{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line-2)}
+.check:last-child{border-bottom:0}
+.check .pill{flex:none}
+.draft{background:var(--bg);border:1px dashed #C9CED4;border-radius:var(--r);padding:10px 12px;margin:6px 0}
+ol.steps{margin:4px 0 0;padding-left:18px}
+ol.steps li{margin:2px 0}
+
+/* Kai panel */
+.kai{border-left:1px solid var(--line);background:#fff;display:flex;flex-direction:column;height:calc(100vh - 92px);position:sticky;top:0}
+.kai-h{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.kai-h b{font-size:15px}
+.kai-h .small{display:block}
+.kai-log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:100%}
+.msg.u{align-self:flex-end;background:var(--violet);color:#fff;border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%}
+.msg.k{background:var(--bg);border:1px solid var(--line-2);border-radius:12px 12px 12px 2px;padding:10px 12px}
+.msg.k p{margin:0 0 8px}
+.msg.k p:last-child{margin-bottom:0}
+.msg.k table{font-size:12.5px;margin:6px 0 8px;background:#fff;border:1px solid var(--line-2);border-radius:6px}
+.msg.k td,.msg.k th{padding:5px 8px}
+.fb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 0}
+.chip{border:1px solid var(--violet-line);background:var(--violet-soft);color:var(--violet-ink);border-radius:999px;padding:4px 10px;font-size:12.5px;cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--violet)}
+.kai-f{padding:12px 16px 14px;border-top:1px solid var(--line);margin-top:10px}
+.kai-f form{display:flex;gap:8px}
+.kai-f input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
+.kai-f .small{margin-top:6px}
+.kai-toggle{display:none}
+
+/* drawer + modal */
+.scrim{position:fixed;inset:0;background:rgba(20,23,26,.36);z-index:40}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(620px,100%);background:#fff;z-index:41;box-shadow:-8px 0 30px rgba(0,0,0,.12);display:flex;flex-direction:column}
+.drawer header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.drawer .body{padding:18px 22px 40px;overflow-y:auto}
+.drawer section{margin-bottom:22px}
+.x{border:1px solid var(--line);background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;flex:none;font-size:18px;line-height:1}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 24px));background:#fff;border-radius:var(--r-lg);z-index:51;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal + .scrim, .scrim.m{z-index:50}
+.modal textarea{width:100%;min-height:70px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin-top:6px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.err{color:var(--bad);font-size:12.5px;margin-top:4px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;z-index:60;font-size:13px;max-width:calc(100% - 24px)}
+.empty{padding:20px;text-align:center;color:var(--muted)}
+
+@media (max-width:1180px){
+  .app{grid-template-columns:200px minmax(0,1fr)}
+  .kai{position:fixed;right:0;top:0;height:100%;width:min(400px,100%);z-index:30;box-shadow:-8px 0 30px rgba(0,0,0,.12);display:none}
+  .kai.open{display:flex}
+  .kai-toggle{display:inline-flex;position:fixed;right:16px;bottom:16px;z-index:29}
+}
+@media (max-width:780px){
+  .app,.app.ops{grid-template-columns:1fr}
+  .side{display:none}
+  main{padding:16px 14px 80px}
+  .grid3{grid-template-columns:1fr}
+  .clock{margin-left:0;width:100%}
+  .demo{gap:10px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .drawer{animation:slide .18s ease-out}
+  @keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
+}
+@media print{.concept,.demo,.kai,.kai-toggle{display:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="concept" role="note">
+  <span>Concept prototype by Shri Nagarajan. Not affiliated with or endorsed by Airwallex. All businesses, people and figures are fictional; rates and fees are illustrative.</span>
+  <span><a href="brief.html">Read the one-page brief</a></span>
+</div>
+
+<div class="demo" aria-label="Demo controls">
+  <div class="grp"><span class="lbl" id="lv">Whose screen</span>
+    <div class="seg" role="group" aria-labelledby="lv">
+      <button type="button" data-view="merchant" aria-pressed="true">Business</button>
+      <button type="button" data-view="ops" aria-pressed="false">Settlement ops</button>
+    </div>
+  </div>
+  <div class="grp"><label for="mk">Market</label>
+    <select id="mk"><option value="uk">UK entity, GBP home</option><option value="eu">EU entity, EUR home</option></select>
+  </div>
+  <div class="grp"><label for="sc">What's happening</label>
+    <select id="sc">
+      <option value="normal">Normal day</option>
+      <option value="late">Card scheme funding is late</option>
+      <option value="negative">Refunds exceed sales (negative batch)</option>
+    </select>
+  </div>
+  <button type="button" class="btn sm" id="reset">Reset demo</button>
+  <span class="clock" id="clock"></span>
+</div>
+
+<div class="app" id="app">
+  <nav class="side" aria-label="Product navigation" id="side"></nav>
+  <main id="main" tabindex="-1"></main>
+  <aside class="kai" id="kai" aria-label="Kai assistant"></aside>
+</div>
+<button type="button" class="btn pri kai-toggle" id="kaiToggle" aria-controls="kai" aria-expanded="false">Ask Kai</button>
+<div id="layer"></div>
+<div class="sr" aria-live="polite" id="live"></div>
+
+<script>
+"use strict";
+/* ---------- data ---------- */
+const FEE = 0.019, RES = 0.05, DFEE = 15, FXM = 0.006;
+const MARKETS = {
+  uk:{ merchant:"Fernhill Outdoor Ltd", short:"FO", place:"Kendal, Cumbria", entity:"UK entity", tz:"London time", clock:"12:30", locale:"en-GB",
+    home:"GBP", second:"EUR", conv:["AUD","USD"], add:"AUD",
+    rate:{EUR:1.14, AUD:1.98, USD:1.31},
+    mix:[["GBP",61],["EUR",22],["AUD",9],["USD",8]],
+    out:[["GBP","Payroll, rent and UK suppliers",142000],["EUR","EU fulfilment and ads",18500],["AUD","Ballarat Merino Mills (wool)",38000],["USD","Software subscriptions",2100]],
+    supplier:{name:"Ballarat Merino Mills", ccy:"AUD", amt:38000, date:"Tue 1 Dec"},
+    b:{ home:{n:412,gross:24860,ref:1240,refN:19,cb:310,cbN:2,rel:1128.50},
+        second:{n:166,gross:11460,ref:380,refN:6,cb:0,cbN:0,rel:402.10,mc:4920,mcN:71},
+        conv:{AUD:{n:31,gross:3960},USD:{n:22,gross:2489}} },
+    avail:{home:48900, second:7150, secondNeg:1180}, reserve:{home:6300, second:2410},
+    flight:{home:{today:18420,funding:31960}, second:{today:6240,funding:12890}},
+    recall:{item:"Skiddaw down jacket", refunds:14200, n:214},
+    rails:"Faster Payments", safeguard:"FCA safeguarding rules (CASS 15)", returnDue:"Mon 21 Dec",
+    ops:{ fund:{total:412300, merchants:1860, holdAmt:41300, holdN:158, headroom:18400000, committed:6100000}, credit:{amt:2410.55, ref:"FERNHILL INV2231", payer:"Lakeland Guiding Co"}, dup:{merchant:"Northlight Studios", amt:89, order:"NS-55120"} },
+    variance:14.20, threshold:"£250,000"
+  },
+  eu:{ merchant:"Mareel B.V.", short:"MA", place:"Utrecht, Netherlands", entity:"EU entity", tz:"Amsterdam time", clock:"13:30", locale:"en-NL",
+    home:"EUR", second:"USD", conv:["GBP","AUD"], add:"GBP",
+    rate:{USD:1.15, GBP:0.877, AUD:1.74},
+    mix:[["EUR",64],["USD",19],["GBP",11],["AUD",6]],
+    out:[["EUR","Payroll, rent and EU suppliers",121000],["USD","US ads and freight",14200],["GBP","Pennine Fulfilment (UK warehouse)",24000],["AUD","Marketplace fees",900]],
+    supplier:{name:"Pennine Fulfilment", ccy:"GBP", amt:24000, date:"Tue 1 Dec"},
+    b:{ home:{n:388,gross:27340,ref:1610,refN:22,cb:250,cbN:2,rel:1190.40},
+        second:{n:120,gross:9120,ref:260,refN:4,cb:0,cbN:0,rel:380,mc:3880,mcN:58},
+        conv:{GBP:{n:34,gross:3110},AUD:{n:19,gross:2780}} },
+    avail:{home:52300, second:6400, secondNeg:940}, reserve:{home:7100, second:1950},
+    flight:{home:{today:20110,funding:35020}, second:{today:4980,funding:10140}},
+    recall:{item:"Ventoux rain shell", refunds:12900, n:188},
+    rails:"SEPA Instant", safeguard:"safeguarding requirements for the EU e-money entity", returnDue:null,
+    ops:{ fund:{total:386900, merchants:1540, holdAmt:38700, holdN:131, headroom:9600000, committed:3900000}, credit:{amt:2410.55, ref:"MAREEL INV2231", payer:"Fietsatelier Groen"}, dup:{merchant:"Studio Veld", amt:89, order:"SV-30718"} },
+    variance:14.20, threshold:"€250,000"
+  }
+};
+const SYM = {GBP:"pounds", EUR:"euros", AUD:"Australian dollars", USD:"US dollars"};
+
+const fresh = () => ({view:"merchant", market:"uk", scenario:"normal", mtab:"overview", otab:"exceptions",
+  added:false, fast:false, reviewAsked:false, e1:null, e4:null, e5:null, e6:null, kai:[], fb:0, audit:[]});
+let S = fresh();
+const M = () => MARKETS[S.market];
+
+/* ---------- helpers ---------- */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = (t) => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r2 = (n) => Math.round(n*100)/100;
+const money = (n, c) => new Intl.NumberFormat(M().locale,{style:"currency",currency:c,minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const money0 = (n, c) => new Intl.NumberFormat(M().locale,{style:"currency",currency:c,maximumFractionDigits:0}).format(n);
+const say = (t) => { const l = $("#live"); l.textContent = ""; setTimeout(()=> l.textContent = t, 30); };
+const log = (who, what) => S.audit.unshift({t: nowStamp(), who, what});
+let tick = 0; const nowStamp = () => { const base = M().clock.split(":").map(Number); const m = base[1] + (tick++); return `${String(base[0]+Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`; };
+function toast(t){ const d = document.createElement("div"); d.className="toast"; d.setAttribute("role","status"); d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),3200); }
+
+/* ---------- settlement maths ---------- */
+function batch(key, base=false){
+  const m = M(), b = m.b;
+  if (key === "fallback"){
+    const conv = m.conv.map(c => ({c, n:b.conv[c].n, gross:b.conv[c].gross, home:r2(b.conv[c].gross / m.rate[c])}));
+    const gross = r2(conv.reduce((a,x)=>a+x.home,0)), n = conv.reduce((a,x)=>a+x.n,0);
+    const lines = conv.map(x => ({label:`${x.c} payments (${x.n}), ${money(x.gross,x.c)} converted at ${m.rate[x.c].toFixed(4)} ${x.c} per ${m.home}`, amt:x.home, src:"Settlement report: FX line"}));
+    const fee = r2(gross*FEE), res = r2(gross*RES);
+    lines.push({label:"Processing fees (1.9% blended, illustrative)", amt:-fee, src:"Fee report"});
+    lines.push({label:"Rolling reserve held (5% for 90 days)", amt:-res, src:"Reserve plan"});
+    const net = r2(lines.reduce((a,x)=>a+x.amt,0));
+    return {key, ccy:m.home, n, gross, lines, net, title:`Fallback batch (${m.conv.join(" and ")} into ${m.home})`};
+  }
+  const d = b[key], ccy = key==="home" ? m.home : m.second;
+  let gross = d.gross, ref = d.ref, refN = d.refN;
+  const lines = [{label:`Card and wallet payments (${d.n})`, amt:gross, src:"Payment activity export"}];
+  if (!base && key==="second" && S.scenario==="late" && S.e1==="hold"){
+    lines.push({label:`Moved to Mon 23 Nov batch: ${d.mcN} Mastercard payments waiting on scheme funding`, amt:-d.mc, src:"Settlement report: deferred", flag:true});
+    gross = gross - d.mc;
+  }
+  if (!base && key==="second" && S.scenario==="negative"){ ref = m.recall.refunds + d.ref; refN = m.recall.n + d.refN; }
+  lines.push({label:`Refunds (${refN})`, amt:-ref, src:"Settlement report: refunds", flag: !base && key==="second" && S.scenario==="negative"});
+  if (d.cb) { lines.push({label:`Chargebacks (${d.cbN})`, amt:-d.cb, src:"Settlement report: disputes"}); lines.push({label:`Dispute fees (${d.cbN} at ${money(DFEE,ccy)}, illustrative)`, amt:-d.cbN*DFEE, src:"Fee report"}); }
+  const fee = r2(gross*FEE), res = r2(gross*RES);
+  lines.push({label:"Processing fees (1.9% blended, illustrative)", amt:-fee, src:"Fee report"});
+  lines.push({label:"Rolling reserve held (5% for 90 days)", amt:-res, src:"Reserve plan"});
+  lines.push({label:"Reserve released (payments from Thu 20 Aug)", amt:d.rel, src:"Reserve plan: release"});
+  const net = r2(lines.reduce((a,x)=>a+x.amt,0));
+  return {key, ccy, n:d.n, gross:d.gross, lines, net, title:`${ccy} batch`};
+}
+function tonight(){ return ["home","second","fallback"].map(k=>batch(k)); }
+function pastBatches(){
+  const m = M(), out = [];
+  [["Thu 19 Nov",0.93],["Wed 18 Nov",1.06]].forEach(([day,f],i)=>{
+    ["home","second","fallback"].forEach(k=>{
+      const bt = batch(k,true), lines = bt.lines.map(l=>({...l, amt:r2(l.amt*f)}));
+      const exp = r2(lines.reduce((a,x)=>a+x.amt,0)), variance = (i===1 && k==="home");
+      out.push({day, ccy:bt.ccy, key:k, title:bt.title, n:Math.round(bt.n*f), gross:r2(bt.gross*f), lines, expected:exp, net: variance ? r2(exp - m.variance) : exp, variance});
+    });
+  });
+  return out;
+}
+/* ---------- shell ---------- */
+function render(){
+  const m = M();
+  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.view===S.view)));
+  $("#mk").value = S.market; $("#sc").value = S.scenario;
+  $("#clock").textContent = `Demo time: Fri 20 Nov 2026, ${m.clock} ${m.tz}`;
+  document.documentElement.lang = S.market==="uk" ? "en-GB" : "en";
+  $("#app").classList.toggle("ops", S.view==="ops");
+  $("#kai").hidden = S.view==="ops"; $("#kaiToggle").hidden = S.view==="ops";
+  renderSide();
+  if (S.view==="merchant"){ renderMerchant(); renderKai(); } else renderOps();
+}
+function renderSide(){
+  const m = M();
+  const items = S.view==="merchant"
+    ? [["Home"],["Wallet"],["Payments"],["Settlements",1],["Transfers"],["Cards"]]
+    : [["Settlement operations",1],["Scheme files"],["Treasury"],["Safeguarding"],["Reporting"]];
+  $("#side").innerHTML = `<div class="org"><div class="mono" aria-hidden="true">${S.view==="merchant"?m.short:"SO"}</div><div><b>${S.view==="merchant"?esc(m.merchant):"Settlement ops"}</b><span>${S.view==="merchant"?esc(m.place):esc(m.entity)}</span></div></div>
+  <div class="navh">${S.view==="merchant"?"Account":"Internal tools"}</div>
+  <ul>${items.map(([t,c])=>`<li><span class="${c?"cur":"dim"}" ${c?'aria-current="page"':""}>${t}</span></li>`).join("")}</ul>
+  <p class="small muted" style="padding:14px 8px 0">Only the highlighted area is built in this concept.</p>`;
+}
+
+/* ---------- merchant ---------- */
+function merchantBanner(){
+  const m = M(), d = m.b.second;
+  if (S.scenario==="late"){
+    if (!S.e1) return `<div class="notice warn" role="status"><h3>Some ${m.second} payments are waiting on Mastercard</h3><p>${money(d.mc,m.second)} from ${d.mcN} payments you took on Wed 18 Nov depends on Mastercard funding that's running late today. We'll confirm by 16:00 whether tonight's ${m.second} batch is affected.</p><p class="small">You don't need to do anything. Everything else settles tonight as normal.</p></div>`;
+    if (S.e1==="approve") return `<div class="notice ok" role="status"><h3>Your ${m.second} batch is on time</h3><p>Mastercard's funding for Wed 18 Nov arrived late, but we've covered it, so tonight's ${m.second} batch settles in full.</p></div>`;
+    return `<div class="notice" role="status"><h3>${money(d.mc,m.second)} moves to Monday's batch</h3><p>Mastercard's funding for ${d.mcN} payments from Wed 18 Nov hasn't arrived, so they'll settle on Mon 23 Nov instead. The rest of tonight's ${m.second} batch settles as planned.</p></div>`;
+  }
+  if (S.scenario==="negative"){
+    const bt = batch("second"), short = r2(Math.abs(bt.net) - m.avail.secondNeg);
+    if (S.e5) return `<div class="notice ok" role="status"><h3>Sorted: tonight's ${m.second} batch</h3><p>${esc(choiceText(S.e5))}</p></div>`;
+    return `<div class="notice bad" role="alert"><h3>Tonight's ${m.second} batch will be negative</h3>
+      <p>Refunds for ${m.recall.n} ${esc(m.recall.item)} orders come to ${money(m.recall.refunds,m.second)}, more than today's ${m.second} sales. Tonight's batch is ${money(bt.net,m.second)}. You have ${money(m.avail.secondNeg,m.second)} available in ${m.second}, which leaves ${money(short,m.second)} to cover.</p>
+      <p class="small">Choose by 22:00 ${m.tz}. If you don't choose, Monday's ${m.second} batch covers it and nothing is converted without your say-so.</p>
+      <div class="acts"><button class="btn sm" data-e5="topup">Add ${m.second} by bank transfer</button><button class="btn sm" data-e5="convert">Convert ${money(short,m.second)} from ${m.home} now</button><button class="btn sm pri" data-e5="carry">Let Monday's batch cover it</button><button class="btn sm link" data-ask="negative">Ask Kai why</button></div></div>`;
+  }
+  return "";
+}
+function choiceText(c){
+  const m = M(), bt = batch("second"), short = r2(Math.abs(bt.net) - m.avail.secondNeg);
+  if (c==="topup") return `We've given you ${m.second} bank details on the Wallet page. Once ${money(short,m.second)} arrives, tonight's batch completes without touching your ${m.home}.`;
+  if (c==="convert") return `${money(short,m.second)} was converted from ${m.home} at ${m.rate[m.second].toFixed(4)} (illustrative) and tonight's batch will complete.`;
+  return `Monday's ${m.second} batch will cover the remaining ${money(short,m.second)}. Your ${m.second} balance shows the shortfall until then, and we won't convert anything.`;
+}
+function renderMerchant(){
+  const m = M();
+  const tabs = [["overview","Overview"],["batches","Batches"],["setup","Settlement setup"]];
+  $("#main").innerHTML = `<h1>Settlements</h1><p class="sub">${esc(m.merchant)} · ${m.entity} · batches settle daily at 23:00 ${m.tz}</p>
+  ${merchantBanner()}
+  <div class="tabs" role="tablist" aria-label="Settlements sections">${tabs.map(([k,t])=>`<button role="tab" id="t-${k}" aria-controls="p-${k}" aria-selected="${S.mtab===k}" tabindex="${S.mtab===k?0:-1}" data-mtab="${k}">${t}</button>`).join("")}</div>
+  <div role="tabpanel" id="p-${S.mtab}" aria-labelledby="t-${S.mtab}">${S.mtab==="overview"?mOverview():S.mtab==="batches"?mBatches():mSetup()}</div>`;
+}
+function mOverview(){
+  const m = M(), tn = tonight();
+  const secNet = tn[1].net, homeTotal = r2(tn[0].net + tn[2].net);
+  const availSecond = S.scenario==="negative" ? m.avail.secondNeg : m.avail.second;
+  const rows = [
+    {ccy:m.home, today:m.flight.home.today, fund:m.flight.home.funding, bt:homeTotal, res:m.reserve.home, av:m.avail.home},
+    {ccy:m.second, today:m.flight.second.today, fund:m.flight.second.funding, bt:secNet, res:m.reserve.second, av:availSecond}
+  ];
+  const bar = (x) => { const parts=[x.today,x.fund,Math.max(x.bt,0),x.res,x.av]; const tot=parts.reduce((a,b)=>a+b,0)||1; return `<div class="bar" aria-hidden="true">${parts.map((p,i)=>`<i class="c${i+1}" style="width:${(p/tot*100).toFixed(1)}%"></i>`).join("")}</div>`; };
+  return `<div class="grid3">
+    <div class="card stat"><div class="k">Settling tonight at 23:00</div><div class="v num">${money(homeTotal,m.home)}</div><div class="s num">and ${money(secNet,m.second)} · 3 batches</div></div>
+    <div class="card stat"><div class="k">Available now</div><div class="v num">${money(m.avail.home,m.home)}</div><div class="s num">and ${money(availSecond,m.second)}</div></div>
+    <div class="card stat"><div class="k">Held in reserve</div><div class="v num">${money(m.reserve.home,m.home)}</div><div class="s num">and ${money(m.reserve.second,m.second)} · released after 90 days</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="row between wrap"><h2 style="margin:0">Where your money is right now</h2><span class="small muted">Card payments settle 2 business days after capture</span></div>
+    <div class="legend" aria-hidden="true" style="margin-top:10px"><span><b class="c1"></b>Taken today</span><span><b class="c2"></b>Waiting for scheme funding</span><span><b class="c3"></b>In tonight's batch</span><span><b class="c4"></b>In reserve</span><span><b class="c5"></b>Available</span></div>
+    <div class="tablewrap"><table>
+      <caption class="sr">Money in flight by currency and stage</caption>
+      <thead><tr><th scope="col">Currency</th><th scope="col" class="r">Taken today</th><th scope="col" class="r">Waiting for funding</th><th scope="col" class="r">In tonight's batch</th><th scope="col" class="r">In reserve</th><th scope="col" class="r">Available</th><th scope="col"><span class="sr">Proportions</span></th></tr></thead>
+      <tbody>${rows.map(x=>`<tr><th scope="row">${x.ccy}${x.ccy===m.home?`<div class="small muted" style="font-weight:400">incl. ${m.conv.join(", ")} converted</div>`:""}</th><td class="r num">${money(x.today,x.ccy)}</td><td class="r num">${money(x.fund,x.ccy)}</td><td class="r num">${money(x.bt,x.ccy)}</td><td class="r num">${money(x.res,x.ccy)}</td><td class="r num">${money(x.av,x.ccy)}</td><td style="min-width:140px;vertical-align:middle">${bar(x)}</td></tr>`).join("")}</tbody>
+    </table></div>
+  </div>
+  <h2>Kai noticed</h2>
+  <div class="stack">${insights().join("")}</div>`;
+}
+function insights(){
+  const m = M(), s = m.supplier, out = [];
+  if (!S.added){
+    const saving = r2(2*FXM*s.amt/m.rate[s.ccy]);
+    out.push(`<div class="insight"><div class="tag">Save on FX</div><p>Your ${s.ccy} sales are converted into ${m.home}, then you convert ${m.home} back into ${s.ccy} to pay ${esc(s.name)} (${money0(s.amt,s.ccy)} due ${s.date}). Keeping ${s.ccy} as ${s.ccy} would skip both conversions. On last month's numbers that's about <b class="num">${money0(saving,m.home)} a month</b> (modelled at 0.6% per conversion).</p>
+    <div class="row wrap"><button class="btn sm pri" data-goto="setup">Review in settlement setup</button><button class="btn sm link" data-ask="fallback">Why are my ${s.ccy} sales converted?</button></div></div>`);
+  } else {
+    out.push(`<div class="insight"><div class="tag">Change scheduled</div><p>${s.ccy} settles as ${s.ccy} from the Mon 23 Nov batch. Kai will set aside incoming ${s.ccy} for ${esc(s.name)} on ${s.date} and tell you if it's going to fall short.</p></div>`);
+  }
+  out.push(`<div class="insight"><div class="tag">Weekend timing</div><p>It's Friday. Card payments you take after 23:00 tonight and over the weekend reach your wallet from Tue 24 Nov, because card settlement only counts business days. Thursday's payments arrive Mon 23 Nov.</p><button class="btn sm link" data-ask="weekend">See the dates</button></div>`);
+  out.push(`<div class="insight"><div class="tag">Reserve</div><p>${money(m.b.home.rel,m.home)} of reserve from 20 August is released in tonight's ${m.home} batch. Your dispute rate over the last six months is 0.12%, which is the kind of evidence a reserve review looks at.</p><button class="btn sm link" data-ask="reserve">How does my reserve work?</button></div>`);
+  return out;
+}
+function mBatches(){
+  const m = M(), tn = tonight(), past = pastBatches();
+  const st = (bt) => bt.net < 0 ? `<span class="pill bad">Negative</span>` : (bt.key==="second" && S.scenario==="late" && !S.e1) ? `<span class="pill warn">Waiting on scheme</span>` : (bt.key==="second" && S.e1==="hold") ? `<span class="pill warn">Part deferred</span>` : `<span class="pill vio">Scheduled</span>`;
+  const pst = (p) => p.variance ? (S.e6==="done" ? `<span class="pill ok">Explained</span>` : `<span class="pill warn">${money(M().variance,p.ccy)} not explained</span>`) : `<span class="pill ok">Settled</span>`;
+  return `<div class="tablewrap"><table>
+    <caption class="sr">Settlement batches. Select a batch to see how it adds up.</caption>
+    <thead><tr><th scope="col">Batch date</th><th scope="col">Batch</th><th scope="col" class="r">Payments</th><th scope="col" class="r">Gross</th><th scope="col" class="r">Net to wallet</th><th scope="col">Status</th><th scope="col"><span class="sr">Action</span></th></tr></thead>
+    <tbody>
+    ${tn.map(bt=>`<tr class="click" data-batch="t:${bt.key}"><td>Fri 20 Nov, 23:00</td><td>${esc(bt.title)}</td><td class="r num">${bt.n}</td><td class="r num">${money(bt.gross,bt.ccy)}</td><td class="r num">${money(bt.net,bt.ccy)}</td><td>${st(bt)}</td><td><button class="btn sm" data-batch="t:${bt.key}">View</button></td></tr>`).join("")}
+    ${past.map((p,i)=>`<tr class="click" data-batch="p:${i}"><td>${p.day}, 23:00</td><td>${esc(p.title)}</td><td class="r num">${p.n}</td><td class="r num">${money(p.gross,p.ccy)}</td><td class="r num">${money(p.net,p.ccy)}</td><td>${pst(p)}</td><td><button class="btn sm" data-batch="p:${i}">View</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="small muted">Gross is in the batch currency. The fallback batch converts ${m.conv.join(" and ")} into ${m.home} at the rate shown on each line.</p>`;
+}
+function openBatch(id){
+  const m = M();
+  let title, ccy, lines, net, note="", key, variance=false;
+  if (id.startsWith("t:")){ const bt = batch(id.slice(2)); ({title, ccy, lines, net, key} = bt); title = `${bt.title}, Fri 20 Nov`; }
+  else {
+    const p = pastBatches()[+id.slice(2)];
+    ccy = p.ccy; key = p.key; title = `${p.title}, ${p.day}`; variance = p.variance;
+    lines = p.lines.slice(); net = p.expected;
+    if (variance){
+      if (S.e6==="done"){ lines.push({label:"Visa scheme fee adjustment for October (line added to fee report on 20 Nov)", amt:-m.variance, src:"Fee report: corrected"}); net = r2(net - m.variance); }
+      else { note = `<div class="notice warn"><h3>${money(m.variance,ccy)} doesn't match any line we can see</h3><p>The lines below add up to ${money(net,ccy)}, but ${money(r2(net-m.variance),ccy)} reached your wallet. Kai has opened case SET-48213 with this batch attached rather than guess.</p></div>`; net = r2(net - m.variance); }
+    }
+  }
+  const body = `${note}
+    <section><table class="wf"><caption class="sr">How the batch adds up</caption><thead><tr><th scope="col">Line</th><th scope="col" class="r">${ccy}</th></tr></thead><tbody>
+    ${lines.map(l=>`<tr class="${l.flag?"flag":""}"><td>${esc(l.label)}<div class="src">${esc(l.src)}</div></td><td class="r num">${money(l.amt,ccy)}</td></tr>`).join("")}
+    ${variance && S.e6!=="done" ? `<tr class="flag"><td>Unexplained difference<div class="src">Case SET-48213, open</div></td><td class="r num">${money(-m.variance,ccy)}</td></tr>`:""}
+    <tr class="total"><td>Net to your ${ccy} wallet</td><td class="r num">${money(net,ccy)}</td></tr></tbody></table></section>
+    <section class="row wrap"><button class="btn pri" data-askbatch="${id}">Explain this batch with Kai</button><button class="btn" data-csv="${id}">Download settlement report (CSV)</button></section>
+    <section><h3>How settlement works here</h3><p class="small muted">Payments captured before 23:00 ${m.tz} count as that day. Fees, refunds, disputes and reserve are netted into one amount per currency. ${key==="fallback"?`Currencies you don't hold are converted into ${m.home}.`:`${ccy} settles as ${ccy}, with no conversion.`}</p></section>`;
+  drawer(title, body, id);
+}
+function csvFor(id){
+  const m = M(); let bt;
+  if (id.startsWith("t:")) bt = batch(id.slice(2)); else { const p = pastBatches()[+id.slice(2)]; bt = {ccy:p.ccy, lines:p.lines, net:p.net}; if (p.variance) bt.lines = [...p.lines, {label:S.e6==="done"?"Visa scheme fee adjustment for October":"Unexplained difference (case SET-48213)", amt:-M().variance, src:S.e6==="done"?"Fee report: corrected":"Open case"}]; }
+  const rows = [["line","amount","currency","source"], ...bt.lines.map(l=>[l.label,l.amt.toFixed(2),bt.ccy,l.src]), ["net",bt.net.toFixed(2),bt.ccy,""]];
+  const blob = new Blob([rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n")],{type:"text/csv"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `settlement-${S.market}-${id.replace(":","-")}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  toast("Settlement report downloaded");
+}
+function mSetup(){
+  const m = M(), s = m.supplier, saving = r2(2*FXM*s.amt/m.rate[s.ccy]);
+  const principals = [m.home, m.second, ...(S.added?[`${s.ccy} (from Mon 23 Nov)`]:[])];
+  const conv = m.conv.filter(c=>!(S.added && c===s.ccy));
+  return `<div class="card" style="margin-bottom:16px"><h2>Current setup</h2>
+    <dl class="kv">
+      <dt>Settles as itself</dt><dd>${principals.join(", ")}</dd>
+      <dt>Converted into ${m.home}</dt><dd>${conv.length?conv.join(", "):"Nothing"}</dd>
+      <dt>Timing</dt><dd>${S.fast?"Fast settlement, batches roughly every 20 minutes (from Mon 23 Nov)":"One batch a day at 23:00 "+m.tz}</dd>
+      <dt>Fees</dt><dd>Taken from each batch (net)</dd>
+      <dt>Reserve</dt><dd>5% rolling, held 90 days${S.reviewAsked?' · <span class="pill warn">Review requested</span>':""}</dd>
+    </dl></div>
+  <h2>Kai's suggestions</h2>
+  <p class="small muted" style="margin-top:-4px">Worked out from your last 90 days of sales and your scheduled transfers. Nothing changes until you approve it.</p>
+  <div class="stack">
+    <div class="insight"><div class="tag">Settle ${s.ccy} as ${s.ccy}</div>
+      <p>${s.ccy} is ${m.mix.find(x=>x[0]===s.ccy)[1]}% of your sales, and you pay ${money0(s.amt,s.ccy)} a month to ${esc(s.name)} in ${s.ccy}. Today that money is converted twice.</p>
+      <div class="tablewrap" style="margin-bottom:10px"><table><caption class="sr">Sales and outgoing payments by currency</caption><thead><tr><th scope="col">Currency</th><th scope="col" class="r">Share of sales</th><th scope="col">Regular outgoing payments</th><th scope="col" class="r">Monthly</th></tr></thead>
+      <tbody>${m.mix.map(([c,p])=>{const o=m.out.find(x=>x[0]===c);return `<tr><th scope="row">${c}</th><td class="r num">${p}%</td><td>${esc(o[1])}</td><td class="r num">${money0(o[2],c)}</td></tr>`}).join("")}</tbody></table></div>
+      <dl class="kv small"><dt>Modelled saving</dt><dd class="num">About ${money0(saving,m.home)} a month (two conversions avoided at 0.6% each, illustrative)</dd><dt>Trade-off</dt><dd>${s.ccy} balances sit in ${s.ccy}, so their ${m.home} value moves with the exchange rate.</dd><dt>Takes effect</dt><dd>Mon 23 Nov batch. Tonight's batch is unchanged.</dd></dl>
+      <div class="row" style="margin-top:10px">${S.added?`<span class="pill ok">Approved</span><button class="btn sm" data-undo="added">Undo</button>`:`<button class="btn sm pri" data-approve="added">Settle ${s.ccy} as ${s.ccy}</button>`}</div>
+    </div>
+    <div class="insight"><div class="tag">Fast settlement</div>
+      <p>Instead of waiting for the 23:00 batch, funded payments move into your wallet in batches through the day. On your volumes, money would be usable about 11 hours sooner on average (modelled).</p>
+      <dl class="kv small"><dt>Trade-off</dt><dd>More, smaller batches. Kai groups them into one daily view, and some fees post in a separate end-of-day batch.</dd></dl>
+      <div class="row" style="margin-top:10px">${S.fast?`<span class="pill ok">Approved</span><button class="btn sm" data-undo="fast">Undo</button>`:`<button class="btn sm pri" data-approve="fast">Switch on fast settlement</button>`}</div>
+    </div>
+    <div class="insight"><div class="tag">Reserve</div>
+      <p>Kai can't change your reserve. That's a decision for the risk team. It can send them a review request with your dispute history attached (0.12% over six months, 2 chargebacks this week).</p>
+      <div class="row">${S.reviewAsked?`<span class="pill warn">Review requested · reply within 3 business days</span>`:`<button class="btn sm" data-approve="review">Request a reserve review</button>`}</div>
+    </div>
+  </div>
+  <h2 style="margin-top:22px">Change history</h2>
+  ${S.audit.length?`<div class="tablewrap"><table><caption class="sr">Change history</caption><thead><tr><th scope="col">Time</th><th scope="col">Who</th><th scope="col">What</th></tr></thead><tbody>${S.audit.map(a=>`<tr><td class="num">${a.t}</td><td>${esc(a.who)}</td><td>${esc(a.what)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted small">No changes yet today.</p>`}`;
+}
+
+/* ---------- Kai ---------- */
+function prompts(){
+  const m = M(), p = [];
+  if (S.scenario==="late") p.push(["late",`Is my ${m.second} payout late?`]);
+  if (S.scenario==="negative") p.push(["negative",`Why is my ${m.second} batch negative?`]);
+  p.push(["payout",`Why is tonight's ${m.home} payout less than my sales?`],["weekend","When will this weekend's payments arrive?"],["fallback",`Why did my ${m.supplier.ccy} sales turn into ${SYM[m.home]}?`],["reserve","Can you lower my reserve?"],["variance",`Why was Wednesday's ${m.home} batch ${money(m.variance,m.home)} short?`],["card","Show me the card number for order 4471"]);
+  return p.slice(0,5);
+}
+function renderKai(){
+  const k = $("#kai");
+  k.innerHTML = `<div class="kai-h"><div><b>Kai</b><span class="small muted">Settlement skills (concept). Uses only your settlement records.</span></div><button class="x" id="kaiClose" aria-label="Close Kai">×</button></div>
+  <div class="kai-log" id="kaiLog" role="log" aria-live="polite" aria-label="Conversation with Kai">${S.kai.length?S.kai.map(msgHtml).join(""):`<div class="msg k"><p>Hi. I can explain any settlement line by line, tell you when money will land, and suggest changes to how you settle. I'll show where each number comes from, and if something doesn't add up I'll say so and pass it to a person.</p></div>`}</div>
+  <div class="chips" aria-label="Suggested questions">${prompts().map(([k,t])=>`<button class="chip" data-ask="${k}">${esc(t)}</button>`).join("")}</div>
+  <div class="kai-f"><form id="kaiForm"><label class="sr" for="kaiIn">Ask Kai about your settlements</label><input id="kaiIn" autocomplete="off" placeholder="Ask about a payout, a fee or a date"><button class="btn pri" type="submit">Ask</button></form><p class="small muted">Kai can't move money or change your reserve. Anything that changes your account asks you first.</p></div>`;
+  const lg = $("#kaiLog"); lg.scrollTop = lg.scrollHeight;
+}
+function msgHtml(x, i){
+  if (x.who==="u") return `<div class="msg u">${esc(x.text)}</div>`;
+  return `<div class="msg k">${x.html}${x.fb===undefined?"":fbHtml(x,i)}</div>`;
+}
+function fbHtml(x, i){
+  if (x.fb==="yes") return `<div class="fb">Thanks. Logged as answered.</div>`;
+  if (x.fb==="no") return `<div class="fb" role="group" aria-label="What was wrong?">What was wrong? ${["Numbers look wrong","Too vague","I needed a person"].map(r=>`<button class="chip" data-fbr="${i}" data-r="${r}">${r}</button>`).join("")}</div>`;
+  if (x.fb && x.fb.startsWith("r:")) return `<div class="fb">Sent to the Settlements product team, tagged "${esc(x.fb.slice(2))}", with this conversation attached.</div>`;
+  return `<div class="fb" role="group" aria-label="Did this answer your question?">Did this answer it? <button class="btn sm" data-fb="${i}" data-v="yes">Yes</button><button class="btn sm" data-fb="${i}" data-v="no">No</button></div>`;
+}
+function route(text){
+  const t = text.toLowerCase();
+  if (/card number|full card|\bpan\b|card details/.test(t)) return "card";
+  if (/14\.?20|unexplained|doesn.?t add|short|missing money|wednesday/.test(t)) return "variance";
+  if (S.scenario==="negative" && /negative|recall|refund/.test(t)) return "negative";
+  if (S.scenario==="late" && /late|delay|mastercard|waiting/.test(t)) return "late";
+  if (/weekend|saturday|sunday|monday|tuesday|when.*(arrive|land|get)/.test(t)) return "weekend";
+  if (/reserve|held back|holding/.test(t)) return "reserve";
+  if (/convert|fx|exchange|aud|usd|gbp|eur|pounds|euros|dollars/.test(t)) return "fallback";
+  if (/less|lower|fees?|why.*(payout|batch)|difference|net/.test(t)) return "payout";
+  return "unknown";
+}
+function answer(intent, batchId){
+  const m = M();
+  const tbl = (lines, ccy, net) => `<table><tbody>${lines.map(l=>`<tr><td>${esc(l.label)}</td><td class="r num">${money(l.amt,ccy)}</td></tr>`).join("")}<tr><td><b>Net</b></td><td class="r num"><b>${money(net,ccy)}</b></td></tr></tbody></table>`;
+  if (batchId){
+    if (batchId.startsWith("p:") && pastBatches()[+batchId.slice(2)].variance && S.e6!=="done") intent = "variance";
+    else { const bt = batchId.startsWith("t:") ? batch(batchId.slice(2)) : (()=>{ const p = pastBatches()[+batchId.slice(2)]; const ls = p.variance ? [...p.lines,{label:"Visa scheme fee adjustment for October",amt:-M().variance}] : p.lines; return {lines:ls, ccy:p.ccy, net:p.net}; })();
+      return {html:`<p>Here's how that batch adds up. Every line comes from your settlement, fee or reserve report.</p>${tbl(bt.lines,bt.ccy,bt.net)}<p class="src">Sources: settlement report, fee report, reserve plan</p>`, fb:null}; }
+  }
+  switch(intent){
+    case "payout": { const bt = batch("home"); const ded = r2(bt.gross - bt.net);
+      return {html:`<p>Tonight's ${m.home} batch has ${money(bt.gross,m.home)} of payments and pays ${money(bt.net,m.home)} into your wallet. The ${money(ded,m.home)} difference is refunds, chargebacks, fees and reserve, less the reserve being released:</p>${tbl(bt.lines,m.home,bt.net)}<p>The biggest single item is the 5% reserve. ${money(m.b.home.rel,m.home)} of older reserve comes back in the same batch, so the net effect of reserve tonight is ${money(r2(m.b.home.rel - bt.gross*RES),m.home)}.</p><p class="src">Sources: settlement report, fee report, reserve plan</p>`, fb:null}; }
+    case "weekend":
+      return {html:`<p>Card payments settle 2 business days after the day they count as taken, and the day ends at 23:00 ${m.tz}.</p><table><thead><tr><th>Taken</th><th>In your wallet</th></tr></thead><tbody><tr><td>Thu 19 Nov</td><td>Mon 23 Nov</td></tr><tr><td>Fri 20 Nov before 23:00</td><td>Tue 24 Nov</td></tr><tr><td>Fri after 23:00, Sat or Sun</td><td>From Tue 24 Nov</td></tr></tbody></table><p>${m.rails} payments into your account aren't affected. They arrive as they're sent.</p>${S.fast?"":`<p>If you want weekday money sooner, fast settlement in <button class="btn link" data-goto="setup">settlement setup</button> moves it through the day.</p>`}`, fb:null};
+    case "fallback": { const s = m.supplier, saving = r2(2*FXM*s.amt/m.rate[s.ccy]);
+      return {html:`<p>${s.ccy} isn't one of your settlement currencies, so ${s.ccy} payments go into your fallback batch and are converted into ${m.home} at the rate on the day. Tonight that's ${money(m.b.conv[s.ccy].gross,s.ccy)} at ${m.rate[s.ccy].toFixed(4)} (illustrative).</p><p>You also pay ${esc(s.name)} ${money0(s.amt,s.ccy)} a month, so that money is converted back again. Settling ${s.ccy} as ${s.ccy} would avoid both conversions, about ${money0(saving,m.home)} a month on last month's figures.</p>${S.added?`<p><span class="pill ok">Already approved, from Mon 23 Nov</span></p>`:`<p><button class="btn sm pri" data-approve="added">Settle ${s.ccy} as ${s.ccy}</button> <span class="small muted">You'll be asked to confirm.</span></p>`}<p class="src">Sources: settlement report FX lines, scheduled transfers</p>`, fb:null}; }
+    case "reserve":
+      return {html:`<p>I can't change your reserve. The risk team decides that, and I don't see how they score accounts.</p><p>Here's what I can tell you: you have ${money(m.reserve.home,m.home)} and ${money(m.reserve.second,m.second)} held. Each day 5% of your card payments goes in, and the amount from 90 days earlier comes out. Tonight ${money(m.b.home.rel,m.home)} is released.</p>${S.reviewAsked?`<p><span class="pill warn">Review already requested</span></p>`:`<p>I can send the risk team a review request with your last six months of disputes attached (0.12%). <button class="btn sm" data-approve="review">Request a review</button></p>`}<p class="src">Source: reserve plan</p>`, fb:null};
+    case "card":
+      return {html:`<p>I can't show full card numbers, to anyone. For order 4471 I can tell you it was a Visa debit card ending 4417, paid on Wed 18 Nov and included in Thursday's ${m.home} batch.</p><p>If you need to refund it, you can do that from the payment itself without the card number.</p>`, fb:null};
+    case "variance":
+      if (S.e6==="done") return {html:`<p>Found it. Wednesday's ${m.home} batch included a Visa scheme fee adjustment for October of ${money(m.variance,m.home)}. It was taken correctly but was missing from your fee report. The report now has the line, so the batch adds up.</p><p class="src">Source: fee report (corrected 20 Nov)</p>`, fb:null};
+      return {html:`<p>I can't fully explain ${money(m.variance,m.home)} of Wednesday's ${m.home} batch. It doesn't match any fee, refund, dispute or reserve line I can see, and I'd rather not guess.</p><p>I've opened case <b>SET-48213</b> with the batch and its reports attached. The Settlements team will reply here, usually within 1 business day.</p>`, fb:null};
+    case "late": { const d = m.b.second;
+      if (S.e1==="approve") return {html:`<p>No. Mastercard's funding was late, but tonight's ${m.second} batch settles in full. It's been covered.</p>`, fb:null};
+      if (S.e1==="hold") return {html:`<p>Partly. ${money(d.mc,m.second)} from ${d.mcN} Mastercard payments taken on Wed 18 Nov moves to Mon 23 Nov, because the funding hasn't arrived. The rest of tonight's batch settles as planned.</p>`, fb:null};
+      return {html:`<p>Not yet. Mastercard's funding for some payments taken on Wed 18 Nov is running late today. It affects ${money(d.mc,m.second)} across ${d.mcN} of your payments.</p><p>The Settlements team is deciding how to handle it and you'll hear by 16:00. Your other payments settle tonight as normal, and there's nothing you need to do.</p>`, fb:null}; }
+    case "negative": { const bt = batch("second"), short = r2(Math.abs(bt.net) - m.avail.secondNeg);
+      return {html:`<p>Refunds for the ${esc(m.recall.item)} recall (${m.recall.n} orders, ${money(m.recall.refunds,m.second)}) are bigger than today's ${m.second} sales:</p>${tbl(bt.lines,m.second,bt.net)}<p>You have ${money(m.avail.secondNeg,m.second)} in ${m.second}, so ${money(short,m.second)} still needs covering. You can add ${m.second}, convert from ${m.home}, or let Monday's batch cover it. If you don't choose by 22:00, Monday's batch covers it and nothing is converted.</p>`, fb:null}; }
+    default:
+      S.fb++;
+      return {html:`<p>I can't answer that from your settlement records yet. I've passed it to the Settlements team with your last three batches attached, and you'll get a reply here within 1 business day.</p><p class="small muted">Questions I can't answer go to the product team too, so they can teach me.</p>`, fb:null};
+  }
+}
+function ask(intent, text, batchId){
+  const p = prompts().find(x=>x[0]===intent);
+  S.kai.push({who:"u", text: text || (p?p[1]:intent)});
+  const a = answer(intent, batchId); S.kai.push({who:"k", html:a.html, fb:a.fb});
+  if (intent==="variance" && S.e6!=="done" && !S.e6) S.e6 = "open";
+  renderKai(); openKaiMobile(); say("Kai replied");
+}
+function openKaiMobile(){ if (matchMedia("(max-width:1180px)").matches){ $("#kai").classList.add("open"); $("#kaiToggle").setAttribute("aria-expanded","true"); } }
+
+/* ---------- ops ---------- */
+function exceptions(){
+  const m = M(), f = m.ops.fund, home = m.home, sec = m.second, list = [];
+  if (S.scenario==="late") list.push({id:"E1", type:"Scheme funding late", ccy:sec, amt:f.total, age:"3h 30m", status: S.e1==="approve"?["ok","Pre-funded"]:S.e1==="hold"?["warn","Held to next batch"]:["warn","Needs approval"], who:"Kai proposal"});
+  if (S.scenario==="negative") list.push({id:"E5", type:"Negative batch, balance too low", ccy:sec, amt:Math.abs(batch("second").net), age:"0h 20m", status: S.e5?["ok","Merchant chose"]:["vio","Merchant notified"], who:esc(m.merchant)});
+  list.push({id:"E6", type:"Merchant query Kai couldn't answer", ccy:home, amt:m.variance, age:"1h 05m", status: S.e6==="done"?["ok","Resolved"]:["warn","Needs approval"], who:esc(m.merchant)});
+  list.push({id:"E4", type:"Possible duplicate refund", ccy:home, amt:m.ops.dup.amt, age:"0h 40m", status: S.e4==="pause"?["ok","Paused, merchant asked"]:S.e4==="release"?["plain","Released"]:["warn","Needs approval"], who:esc(m.ops.dup.merchant)});
+  list.push({id:"E2", type:"Unmatched bank credit", ccy:home, amt:m.ops.credit.amt, age:"3h 16m", status:["ok","Auto-matched by Kai"], who:m.rails});
+  list.push({id:"E3", type:"Scheme file rounding", ccy:home, amt:0.04, age:"5h 02m", status:["ok","Auto-resolved by Kai"], who:"Visa settlement file"});
+  return list;
+}
+function renderOps(){
+  const m = M(), tabs = [["exceptions","Exceptions"],["liquidity","Liquidity"],["safeguarding","Safeguarding"]];
+  $("#main").innerHTML = `<h1>Settlement operations</h1><p class="sub">${m.entity} · internal view · Kai proposes, people approve anything outside policy</p>
+  <div class="tabs" role="tablist" aria-label="Operations sections">${tabs.map(([k,t])=>`<button role="tab" id="t-${k}" aria-controls="p-${k}" aria-selected="${S.otab===k}" tabindex="${S.otab===k?0:-1}" data-otab="${k}">${t}</button>`).join("")}</div>
+  <div role="tabpanel" id="p-${S.otab}" aria-labelledby="t-${S.otab}">${S.otab==="exceptions"?oExceptions():S.otab==="liquidity"?oLiquidity():oSafeguarding()}</div>`;
+}
+function oExceptions(){
+  const list = exceptions(), open = list.filter(x=>/Needs/.test(x.status[1])).length, auto = list.filter(x=>/Auto/.test(x.status[1])).length;
+  return `<div class="grid3">
+    <div class="card stat"><div class="k">Needs a person</div><div class="v num">${open}</div><div class="s">Outside Kai's policy limits</div></div>
+    <div class="card stat"><div class="k">Resolved by Kai today</div><div class="v num">${auto + 212}</div><div class="s">Within policy, each with an audit trail (illustrative)</div></div>
+    <div class="card stat"><div class="k">Merchant settlement questions this week</div><div class="v num">1,284</div><div class="s">91% answered without a person. Top gap: scheme fee adjustments (illustrative). ${S.fb?`+${S.fb} from this session`:""}</div></div>
+  </div>
+  <div class="tablewrap"><table><caption class="sr">Settlement exceptions. Select one to see Kai's proposal.</caption>
+  <thead><tr><th scope="col">ID</th><th scope="col">What happened</th><th scope="col">Source</th><th scope="col" class="r">Amount</th><th scope="col">Age</th><th scope="col">Status</th><th scope="col"><span class="sr">Action</span></th></tr></thead>
+  <tbody>${list.map(x=>`<tr class="click" data-exc="${x.id}"><td class="num">${x.id}</td><td>${x.type}</td><td>${x.who}</td><td class="r num">${money(x.amt,x.ccy)}</td><td>${x.age}</td><td><span class="pill ${x.status[0]}">${x.status[1]}</span></td><td><button class="btn sm" data-exc="${x.id}">Open</button></td></tr>`).join("")}</tbody></table></div>
+  <p class="small muted">Switch "What's happening" in the bar above to see a late scheme file or a negative batch land here.</p>`;
+}
+function checks(arr){ return arr.map(([res,rule,note])=>`<div class="check"><span class="pill ${res==="pass"?"ok":res==="block"?"bad":"warn"}">${res==="pass"?"Pass":res==="block"?"Blocked":"Needs approval"}</span><div><b>${rule}</b>${note?`<div class="small muted">${note}</div>`:""}</div></div>`).join(""); }
+function openExc(id){
+  const m = M(), f = m.ops.fund, sec = m.second, home = m.home;
+  let title, body;
+  if (id==="E1"){
+    const pre = f.total - f.holdAmt, after = f.headroom - f.committed - (S.e1==="approve"?pre:0);
+    title = `E1 · Mastercard ${sec} funding is late`;
+    body = `<section><h3>What happened</h3><p>Mastercard's ${sec} funding for Wed 18 Nov clearing was due at 09:00 and hasn't arrived. It covers ${money0(f.total,sec)} owed to ${f.merchants.toLocaleString("en-GB")} merchants in tonight's batches.</p>
+      <table><tbody><tr><td>Expected from Mastercard</td><td class="r num">${money(f.total,sec)}</td></tr><tr><td>Received</td><td class="r num">${money(0,sec)}</td></tr><tr><td>Last 90 days</td><td class="r">Late twice, both funded by 17:00</td></tr></tbody></table></section>
+    <section><h3>Kai's proposal</h3><p>Settle on time from our own ${sec} liquidity for ${(f.merchants-f.holdN).toLocaleString("en-GB")} merchants (${money0(pre,sec)}). Hold ${money0(f.holdAmt,sec)} for ${f.holdN} merchants already on enhanced monitoring until the funding lands.</p>
+      <ol class="steps small"><li>Mastercard has paid late twice this quarter and both times paid the same day, so the credit risk of covering it is low.</li><li>Merchants plan payroll around this batch. A late batch on a Friday becomes a Tuesday problem for them.</li><li>Holding the enhanced-monitoring group keeps exposure where we already have concerns to zero.</li></ol></section>
+    <section><h3>Policy checks</h3>${checks([["approve","Pre-funding over "+m.threshold+" needs Treasury sign-off","Two approvers: Settlement ops and Treasury"],["pass","Liquidity buffer stays above 15% of intraday headroom",`Headroom after: ${money0(f.headroom - f.committed - pre,sec)} of ${money0(f.headroom,sec)}`],["pass","No pre-funding for merchants on enhanced monitoring",`${f.holdN} excluded`],["pass","Merchant notices reveal no risk information","Both drafts checked: no mention of monitoring or tiers"]])}</section>
+    <section><h3>Notices Kai has drafted</h3><p class="small muted">To pre-funded merchants</p><div class="draft">Mastercard's funding for payments you took on Wed 18 Nov arrived late. We've covered it, so tonight's batch settles in full. You don't need to do anything.</div><p class="small muted">To held merchants</p><div class="draft">Some of your payments from Wed 18 Nov are waiting on card scheme funding. They'll settle in your next batch. You don't need to do anything.</div></section>
+    <section>${S.e1?`<p><span class="pill ${S.e1==="approve"?"ok":"warn"}">${S.e1==="approve"?"Approved. Pre-funded and notices sent.":"Held. All affected payments move to Mon 23 Nov."}</span></p>`:`<div class="row wrap"><button class="btn pri" data-e1="approve">Approve pre-funding</button><button class="btn" data-e1="hold">Hold everything until funded</button></div><p class="small muted">Approving asks for the Treasury approver. Holding needs a reason.</p>`}</section>`;
+  }
+  if (id==="E2"){
+    const c = m.ops.credit;
+    title = `E2 · ${money(c.amt,home)} bank credit with no matching payment`;
+    body = `<section><h3>What happened</h3><p>${money(c.amt,home)} arrived by ${m.rails} at 09:14 with reference "${c.ref}". No payment intent was waiting for it.</p></section>
+    <section><h3>What Kai did</h3><p>Matched it to ${esc(m.merchant)}'s open invoice INV-2231, raised for ${esc(c.payer)}, and marked the invoice paid.</p>
+      ${checks([["pass","Amount matches the invoice exactly",""],["pass","Reference contains the invoice number",""],["pass","Payer name matches the invoice customer",""],["pass","Auto-match allowed under "+money0(10000,home)+" with three matching signals",""]])}</section>
+    <section><h3>Audit</h3><p class="src">09:14 credit received · 09:14 match proposed (3/3 signals) · 09:14 auto-matched under policy AM-2 · 09:15 safeguarding open item cleared</p><button class="btn" data-undo-e2>Undo match</button></section>`;
+  }
+  if (id==="E3"){
+    title = "E3 · Visa settlement file differs from ledger";
+    body = `<section><h3>What happened</h3><p>Visa's ${home} settlement file for Thu 19 Nov is ${money(0.04,home)} away from our ledger across 18,220 transactions.</p></section>
+    <section><h3>What Kai did</h3><p>Traced it to rounding on 4 currency-converted refunds, posted the difference to the rounding account and closed it.</p>${checks([["pass","Within "+money(1,home)+" tolerance per file",""],["pass","Cause identified, not just netted off","4 refunds listed in the audit"]])}</section>`;
+  }
+  if (id==="E4"){
+    const d = m.ops.dup;
+    title = `E4 · Possible duplicate refund, ${esc(d.merchant)}`;
+    body = `<section><h3>What happened</h3><p>${esc(d.merchant)} sent two refunds of ${money(d.amt,home)} for order ${d.order} through the API, 4 seconds apart, with different idempotency keys. The second hasn't gone to the card scheme yet. It's in the 16:00 clearing file.</p></section>
+    <section><h3>Kai's proposal</h3><p>Pause the second refund and ask the merchant. Kai won't cancel a merchant's instruction by itself.</p>${checks([["approve","Changing a merchant instruction needs a person",""],["pass","Customer isn't left out of pocket","First refund already sent"]])}</section>
+    <section><h3>Message Kai has drafted</h3><div class="draft">We've paused a second ${money(d.amt,home)} refund on order ${d.order}. It was sent 4 seconds after the first. If you meant to refund twice, reply "send" and we'll release it in today's 16:00 file.</div></section>
+    <section>${S.e4?`<span class="pill ok">${S.e4==="pause"?"Paused and merchant asked":"Released as sent"}</span>`:`<div class="row"><button class="btn pri" data-e4="pause">Pause and ask merchant</button><button class="btn" data-e4="release">Let it go</button></div>`}</section>`;
+  }
+  if (id==="E5"){
+    const bt = batch("second"), short = r2(Math.abs(bt.net) - m.avail.secondNeg);
+    title = `E5 · Negative ${sec} batch for ${esc(m.merchant)}`;
+    body = `<section><h3>What happened</h3><p>Recall refunds (${m.recall.n} orders) make tonight's ${sec} batch ${money(bt.net,sec)}. The merchant has ${money(m.avail.secondNeg,sec)} in ${sec}, so ${money(short,sec)} is uncovered.</p></section>
+    <section><h3>What Kai did</h3><p>Told the merchant at ${m.clock} with three options and a 22:00 deadline. The default is that Monday's batch covers it, because converting their money without consent would be worse than a short negative balance.</p>${checks([["pass","No FX without the merchant's consent",""],["pass","Shortfall under 5% of 30-day volume","Carry-forward allowed"],["pass","Recall pattern checked","Refunds match original orders, not a refund-fraud pattern"]])}</section>
+    <section><h3>Merchant's choice</h3><p>${S.e5?esc(choiceText(S.e5)):"Waiting. Switch to the Business view to choose for them."}</p></section>`;
+  }
+  if (id==="E6"){
+    title = `E6 · ${esc(m.merchant)} asked about ${money(m.variance,home)} Kai couldn't explain`;
+    body = `<section><h3>What happened</h3><p>Wednesday's ${home} batch paid ${money(m.variance,home)} less than its report lines add up to. Kai told the merchant it couldn't explain it and opened SET-48213, rather than guess.</p></section>
+    <section><h3>What Kai found</h3><p>A Visa scheme fee adjustment for October was netted into the batch but never written to the fee report. The same gap affects 312 other merchants' Wednesday batches (${money0(4180,home)} in total).</p>${checks([["block","Kai's explanations must cite a report line","Until the line exists, Kai can't explain it"],["approve","Backfilling a fee report needs a person",""]])}</section>
+    <section><h3>Proposed fix</h3><ol class="steps small"><li>Backfill the missing line into 313 fee reports.</li><li>Reply to the merchant in Kai with the corrected report.</li><li>Raise bug PAY-SET-912: scheme fee adjustments skip the fee report writer.</li></ol></section>
+    <section>${S.e6==="done"?`<span class="pill ok">Approved. Reports backfilled and merchant answered.</span>`:`<button class="btn pri" data-e6>Approve fix and reply</button>`}</section>`;
+  }
+  drawer(title, body);
+}
+function oLiquidity(){
+  const m = M(), f = m.ops.fund, sec = m.second, pre = S.e1==="approve" ? f.total - f.holdAmt : 0;
+  const after = f.headroom - f.committed - pre, pct = (after/f.headroom*100).toFixed(0);
+  return `<div class="card" style="margin-bottom:16px"><h2>${sec} intraday position</h2>
+  <div class="tablewrap"><table><caption class="sr">${sec} liquidity</caption><tbody>
+    <tr><th scope="row">Intraday headroom</th><td class="r num">${money0(f.headroom,sec)}</td></tr>
+    <tr><th scope="row">Committed to tonight's batches</th><td class="r num">${money0(-f.committed,sec)}</td></tr>
+    <tr><th scope="row">Pre-funding for late scheme money</th><td class="r num">${money0(-pre,sec)}${S.scenario==="late"&&!S.e1?' <span class="pill warn">Pending E1</span>':""}</td></tr>
+    <tr><th scope="row">Left after tonight</th><td class="r num"><b>${money0(after,sec)}</b> (${pct}%)</td></tr>
+  </tbody></table></div>
+  <p class="small muted">Policy floor: 15% of headroom. Kai flags anything that would take us below it before it's proposed.</p></div>`;
+}
+function oSafeguarding(){
+  const m = M(), ccys = [m.home, m.second, ...m.conv];
+  return `<div class="card" style="margin-bottom:16px"><h2>Daily safeguarding reconciliation, Fri 20 Nov</h2>
+  <p class="small muted">Under the ${m.safeguard}. Kai prepares it, a named person signs it off.</p>
+  <div class="tablewrap"><table><caption class="sr">Safeguarding reconciliation by currency</caption><thead><tr><th scope="col">Currency</th><th scope="col">Internal</th><th scope="col">External (bank statements)</th><th scope="col">Open items</th></tr></thead>
+  <tbody>${ccys.map(c=>`<tr><th scope="row">${c}</th><td><span class="pill ok">Agreed</span></td><td><span class="pill ok">Agreed</span></td><td>${c===m.home?`E2 cleared at 09:15 by auto-match`:"None"}</td></tr>`).join("")}</tbody></table></div>
+  <div class="row wrap" style="margin-top:12px"><span class="pill vio plain">Prepared by Kai, 09:20</span><span class="pill plain">Sign-off: Settlement ops lead</span>${m.returnDue?`<span class="pill plain">November monthly safeguarding return due ${m.returnDue}</span>`:""}</div></div>`;
+}
+
+/* ---------- drawer & modal ---------- */
+let lastFocus = null;
+function drawer(title, body){
+  lastFocus = document.activeElement;
+  $("#layer").innerHTML = `<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-modal="true" aria-labelledby="dwT"><header><h2 id="dwT" style="margin:0">${title}</h2><button class="x" data-close aria-label="Close">×</button></header><div class="body">${body}</div></div>`;
+  $(".drawer .x").focus();
+}
+function closeLayer(){ $("#layer").innerHTML = ""; if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus(); }
+function confirmBox({title, text, ok, reason, onOk}){
+  const prev = $("#layer").innerHTML;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<div class="scrim m"></div><div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="mdT" aria-describedby="mdD"><h2 id="mdT">${title}</h2><p id="mdD">${text}</p>${reason?`<label for="mdR" class="small">${reason}</label><textarea id="mdR"></textarea><div class="err" id="mdE" hidden>Please add a reason. It goes in the audit trail.</div>`:""}<div class="acts"><button class="btn" id="mdN">Cancel</button><button class="btn pri" id="mdY">${ok}</button></div></div>`;
+  document.body.appendChild(wrap);
+  const first = reason ? $("#mdR", wrap) : $("#mdY", wrap); first.focus();
+  const done = () => wrap.remove();
+  $("#mdN", wrap).onclick = () => { done(); };
+  $("#mdY", wrap).onclick = () => { if (reason){ const v = $("#mdR",wrap).value.trim(); if(!v){ $("#mdE",wrap).hidden=false; $("#mdR",wrap).focus(); return; } onOk(v); } else onOk(); done(); };
+  wrap.addEventListener("keydown", e => { if (e.key==="Escape"){ e.stopPropagation(); done(); } if (e.key==="Tab"){ const f=[...wrap.querySelectorAll("button,textarea")]; const i=f.indexOf(document.activeElement); if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus();} else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus();} } });
+}
+
+/* ---------- actions ---------- */
+function approve(what){
+  const m = M(), s = m.supplier;
+  if (what==="added") confirmBox({title:`Settle ${s.ccy} as ${s.ccy}?`, text:`From the Mon 23 Nov batch, ${s.ccy} payments will settle into your ${s.ccy} balance instead of being converted into ${m.home}. You can change this back at any time.`, ok:"Approve", onOk:()=>{ S.added=true; log("You (approved Kai's suggestion)",`${s.ccy} now settles as ${s.ccy} from Mon 23 Nov`); rerender(); toast(`${s.ccy} will settle as ${s.ccy} from Monday`); }});
+  if (what==="fast") confirmBox({title:"Switch on fast settlement?", text:"From Mon 23 Nov, funded payments move into your wallet in batches through the day. Some fees will post in a separate end-of-day batch.", ok:"Switch on", onOk:()=>{ S.fast=true; log("You (approved Kai's suggestion)","Fast settlement on from Mon 23 Nov"); rerender(); toast("Fast settlement starts Monday"); }});
+  if (what==="review") confirmBox({title:"Request a reserve review?", text:"Kai will send the risk team your last six months of dispute history. They'll reply within 3 business days. Your reserve stays as it is until they decide.", ok:"Send request", onOk:()=>{ S.reviewAsked=true; log("Kai, on your request","Reserve review sent to risk team with dispute history"); rerender(); toast("Review request sent"); }});
+}
+function rerender(){ render(); }
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("button,tr.click,[data-close]"); if (!t) return;
+  if (t.matches("[data-close]")) return closeLayer();
+  if (t.dataset.view){ S.view = t.dataset.view; return render(); }
+  if (t.dataset.mtab){ S.mtab = t.dataset.mtab; render(); return $(`#t-${S.mtab}`).focus(); }
+  if (t.dataset.otab){ S.otab = t.dataset.otab; render(); return $(`#t-${S.otab}`).focus(); }
+  if (t.dataset.goto){ closeLayer(); S.view="merchant"; S.mtab = t.dataset.goto; render(); return $(`#t-${S.mtab}`).focus(); }
+  if (t.dataset.batch && !t.dataset.askbatch){ e.stopPropagation(); return openBatch(t.dataset.batch); }
+  if (t.dataset.askbatch){ closeLayer(); return ask("batch","Explain this batch",t.dataset.askbatch); }
+  if (t.dataset.csv) return csvFor(t.dataset.csv);
+  if (t.dataset.ask) return ask(t.dataset.ask);
+  if (t.dataset.approve) return approve(t.dataset.approve);
+  if (t.dataset.undo){ const w=t.dataset.undo; S[w]=false; log("You", w==="added"?`${M().supplier.ccy} back to converting into ${M().home}`:"Fast settlement off"); return render(); }
+  if (t.dataset.fb){ S.kai[+t.dataset.fb].fb = t.dataset.v; if (t.dataset.v==="no") S.fb++; return renderKai(); }
+  if (t.dataset.fbr){ S.kai[+t.dataset.fbr].fb = "r:"+t.dataset.r; renderKai(); return say("Feedback sent to the Settlements product team"); }
+  if (t.dataset.e5){ S.e5 = t.dataset.e5; log("You", "Chose how to cover tonight's negative batch"); render(); return say("Choice saved"); }
+  if (t.dataset.exc){ return openExc(t.dataset.exc); }
+  if (t.dataset.e1==="approve") return confirmBox({title:"Treasury sign-off", text:"Pre-funding this amount needs a second approver. In this demo, Treasury approver Priya Shah (fictional) signs off when you confirm.", ok:"Confirm with Treasury", onOk:()=>{ S.e1="approve"; log("Ops + Treasury","E1 pre-funding approved"); closeLayer(); render(); openExc("E1"); toast("Pre-funded. Merchant notices sent."); }});
+  if (t.dataset.e1==="hold") return confirmBox({title:"Hold everything until funded?", text:"All affected merchants move to Monday's batch and get the held notice.", ok:"Hold", reason:"Reason (required)", onOk:(r)=>{ S.e1="hold"; log("Ops",`E1 held: ${r}`); closeLayer(); render(); openExc("E1"); }});
+  if (t.dataset.e4){ S.e4 = t.dataset.e4; log("Ops", `E4 ${S.e4==="pause"?"paused second refund and asked merchant":"released second refund"}`); closeLayer(); render(); return openExc("E4"); }
+  if (t.hasAttribute("data-e6")) return confirmBox({title:"Approve the fix?", text:"Backfills the missing fee line into 313 reports and replies to the merchant in Kai. Bug PAY-SET-912 stays open until the report writer is fixed.", ok:"Approve", onOk:()=>{ S.e6="done"; log("Ops","E6 fee reports backfilled, merchant answered"); S.kai.push({who:"k", html:`<p>An update on case SET-48213: Wednesday's ${M().home} batch included a Visa scheme fee adjustment for October of ${money(M().variance,M().home)}. It was missing from your fee report, which now has the line. Sorry about that.</p>`}); closeLayer(); render(); openExc("E6"); toast("Fix approved. Merchant answered in Kai."); }});
+  if (t.hasAttribute("data-undo-e2")) return toast("Demo only: undo would reopen the match and the safeguarding item.");
+  if (t.id==="reset"){ S = fresh(); tick=0; closeLayer(); render(); return toast("Demo reset"); }
+  if (t.id==="kaiClose"){ $("#kai").classList.remove("open"); $("#kaiToggle").setAttribute("aria-expanded","false"); return $("#kaiToggle").focus(); }
+  if (t.id==="kaiToggle"){ const o = !$("#kai").classList.contains("open"); $("#kai").classList.toggle("open",o); t.setAttribute("aria-expanded",String(o)); if(o) $("#kaiIn").focus(); return; }
+  if (t.matches("tr.click") && t.dataset.batch) return openBatch(t.dataset.batch);
+  if (t.matches("tr.click") && t.dataset.exc) return openExc(t.dataset.exc);
+});
+document.addEventListener("submit", e => { if (e.target.id!=="kaiForm") return; e.preventDefault(); const v = $("#kaiIn").value.trim(); if (!v) return; ask(route(v), v); setTimeout(()=>$("#kaiIn") && $("#kaiIn").focus(),0); });
+document.addEventListener("keydown", e => {
+  if (e.key==="Escape" && $("#layer").innerHTML) return closeLayer();
+  const tab = e.target.closest('[role="tab"]');
+  if (tab && (e.key==="ArrowRight"||e.key==="ArrowLeft")){
+    const all = [...tab.parentElement.children], i = all.indexOf(tab), n = all[(i + (e.key==="ArrowRight"?1:-1) + all.length) % all.length];
+    n.click();
+  }
+  const row = e.target.closest("tr.click");
+  if (row && e.key==="Enter" && e.target===row){ row.dataset.batch ? openBatch(row.dataset.batch) : openExc(row.dataset.exc); }
+  const dw = $(".drawer");
+  if (dw && e.key==="Tab" && !document.querySelector(".modal")){ const f=[...dw.querySelectorAll("button,a,[tabindex='0']")]; const i=f.indexOf(document.activeElement); if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus();} else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus();} }
+});
+$("#mk").addEventListener("change", e => { S.market = e.target.value; Object.assign(S,{kai:[],added:false,fast:false,reviewAsked:false,e1:null,e4:null,e5:null,e6:null,audit:[]}); closeLayer(); render(); say(`Market changed to ${M().entity}`); });
+$("#sc").addEventListener("change", e => { S.scenario = e.target.value; S.e1=null; S.e5=null; S.kai=[]; closeLayer(); render(); say("Scenario changed"); });
+render();
+</script>
+</body>
+</html>
